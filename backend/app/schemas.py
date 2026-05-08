@@ -10,6 +10,16 @@ from datetime import datetime
 # Das ersetzt das ältere "Optional[X]" aus dem typing-Modul – gleiche Bedeutung, kürzere Schreibweise.
 # Da dieses Projekt Python 3.13 voraussetzt, nutzen wir die moderne Variante überall.
 
+# --- PYTHON LERNEN: Literal-Typen (Open/Closed Principle) ---
+# Literal["a", "b", "c"] erlaubt nur diese drei Strings – keine anderen.
+# Pydantic prüft das automatisch bei der Validierung.
+# Vorteil: Fehler werden früh erkannt, nicht erst wenn etwas falsch in der DB landet.
+from typing import Literal
+
+# Alle gültigen Werte für location_source an einem Ort definiert.
+# Wenn ein neuer Wert dazukommt (z.B. "manual_import"), nur hier ändern.
+LocationSource = Literal["exif", "manual", "ai"]
+
 
 # --- PYTHON LERNEN: Datenklassen mit Typ-Annotationen ---
 # "class FooOut(BaseModel)" = FooOut erbt von BaseModel (Pydantic)
@@ -28,7 +38,7 @@ class PhotoOut(BaseModel):
     lng: float | None
     gps_type: str
     location_name: str | None
-    location_source: str | None
+    location_source: LocationSource | None
     taken_at: datetime | None      # datetime = Datum + Uhrzeit
     uploaded_at: datetime
 

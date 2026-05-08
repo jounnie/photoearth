@@ -27,6 +27,21 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 client = anthropic.Anthropic()
 
 
+# --- PYTHON LERNEN: Private Hilfsfunktion (Single Responsibility) ---
+# Eine Funktion, eine Aufgabe: Datei lesen und base64-kodieren.
+# Der Unterstrich am Anfang signalisiert: "nur für dieses Modul gedacht".
+def _load_image_as_base64(filepath: str) -> tuple[str, str]:
+    """Gibt (base64_data, media_type) zurück."""
+    ext = os.path.splitext(filepath)[1].lower()
+    media_type = {
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif",
+    }.get(ext, "image/jpeg")
+    with open(filepath, "rb") as f:
+        image_data = base64.standard_b64encode(f.read()).decode()
+    return image_data, media_type
+
+
 # --- PYTHON LERNEN: Pydantic-Modell für die KI-Antwort ---
 # float | None = Dezimalzahl ODER leer (wenn die KI den Ort nicht bestimmen kann).
 # Pydantic validiert automatisch: passt der JSON-String dieses Schema? Wenn nicht → Fehler.
@@ -49,20 +64,9 @@ def detect_location(photo_id: int, db: Session = Depends(get_db)):
     if not os.path.exists(path):
         raise HTTPException(404, "Image file not found")
 
-    # --- PYTHON LERNEN: Datei lesen und base64 kodieren ---
-    # "rb" = read binary (Binärdaten lesen, keine Textdatei)
-    with open(path, "rb") as f:
-        # base64.standard_b64encode() gibt Bytes zurück
-        # .decode() konvertiert Bytes → String (UTF-8)
-        image_data = base64.standard_b64encode(f.read()).decode()
-
-    # --- PYTHON LERNEN: dict als Lookup-Tabelle ---
-    # .get(key, default) sucht den Schlüssel; falls nicht gefunden: "image/jpeg"
-    ext = os.path.splitext(photo.filename)[1].lower()
-    media_type = {
-        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-        ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif",
-    }.get(ext, "image/jpeg")
+    # --- PYTHON LERNEN: Hilfsfunktion aufrufen ---
+    # Tuple Unpacking: zwei Rückgabewerte auf einmal in zwei Variablen speichern.
+    image_data, media_type = _load_image_as_base64(path)
 
     # --- PYTHON LERNEN: KI-API aufrufen ---
     # client.messages.create() sendet eine Anfrage an die Claude-API.

@@ -10,6 +10,20 @@ from datetime import datetime
 # io = Input/Output-Modul, damit wir Bytes wie eine Datei behandeln können
 import io
 
+# --- PYTHON LERNEN: TypedDict ---
+# TypedDict definiert ein dict mit festen Schlüsseln und bekannten Typen.
+# Vorteil: IDE-Unterstützung und Typ-Prüfung – ohne Runtime-Overhead.
+from typing import TypedDict
+
+
+# --- PYTHON LERNEN: TypedDict-Definition ---
+# Jede Klasse die TypedDict erbt ist ein gewöhnliches Python-dict,
+# aber der Typ-Checker weiß welche Schlüssel und Typen erwartet werden.
+class ExifMetadata(TypedDict):
+    lat: float | None
+    lng: float | None
+    taken_at: datetime | None
+
 
 # --- PYTHON LERNEN: Funktionen mit Typ-Annotationen ---
 # "def name(parameter: Typ) -> Rückgabetyp:" definiert eine Funktion.
@@ -73,7 +87,7 @@ def _parse_gps(gps_info: dict) -> tuple[float | None, float | None]:
 
 # --- PYTHON LERNEN: bytes als Parameter ---
 # "data: bytes" = die Funktion erwartet rohe Binärdaten (den Inhalt einer Datei)
-def extract_metadata(data: bytes) -> dict:
+def extract_metadata(data: bytes) -> ExifMetadata:
     # io.BytesIO() macht aus einem bytes-Objekt ein "Datei-ähnliches Objekt"
     # So kann Pillow es wie eine echte Datei öffnen, ohne sie auf der Festplatte zu speichern.
     image = Image.open(io.BytesIO(data))
@@ -98,6 +112,6 @@ def extract_metadata(data: bytes) -> dict:
             # break beendet die Schleife sofort (wir haben gefunden was wir suchten)
             break
 
-    # --- PYTHON LERNEN: dict zurückgeben ---
-    # dict mit geschweiften Klammern {} und "Schlüssel": Wert
-    return {"lat": lat, "lng": lng, "taken_at": taken_at}
+    # --- PYTHON LERNEN: TypedDict-Instanz zurückgeben ---
+    # ExifMetadata(...) sieht aus wie ein Konstruktor, erzeugt aber ein normales dict.
+    return ExifMetadata(lat=lat, lng=lng, taken_at=taken_at)

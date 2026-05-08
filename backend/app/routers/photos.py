@@ -36,6 +36,38 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 router = APIRouter(prefix="/photos", tags=["photos"])
 
 
+# --- PYTHON LERNEN: Private async-Hilfsfunktion (Single Responsibility) ---
+# Eine Funktion, eine Aufgabe: eine einzelne Datei validieren, speichern, EXIF lesen.
+# Sie gibt Photo zurück oder None, wenn die Datei kein gültiges Bild ist.
+# "Photo | None" = Photo-Objekt ODER leer – modernes Python 3.10+ Syntax.
+async def _process_upload(
+    file: UploadFile,
+    upload_dir: str,
+    album_id: int | None,
+) -> "Photo | None":
+    if not file.content_type or not file.content_type.startswith("image/"):
+        return None
+
+    data = await file.read()
+    meta = extract_metadata(data)
+
+    ext = os.path.splitext(file.filename or "photo.jpg")[1].lower() or ".jpg"
+    filename = f"{uuid.uuid4().hex}{ext}"
+
+    async with aiofiles.open(os.path.join(upload_dir, filename), "wb") as f:
+        await f.write(data)
+
+    return Photo(
+        filename=filename,
+        original_name=file.filename or filename,
+        album_id=album_id,
+        exif_lat=meta["lat"],
+        exif_lng=meta["lng"],
+        taken_at=meta["taken_at"],
+        location_source="exif" if meta["lat"] is not None else None,
+    )
+
+
 # --- PYTHON LERNEN: Dekoratoren (@) ---
 # @router.get("/") ist ein Dekorator: er "verpackt" die Funktion darunter.
 # Er sagt FastAPI: "Wenn jemand GET /photos/ aufruft, führe list_photos() aus."
@@ -67,47 +99,16 @@ async def upload_photos(
 ):
     results = []  # Leere Liste, wird mit hochgeladenen Fotos gefüllt
 
-    # --- PYTHON LERNEN: for-Schleife über Liste ---
-    # "for x in y:" läuft durch jeden Eintrag in y
+    # --- PYTHON LERNEN: for-Schleife + Hilfsfunktion ---
+    # _process_upload() kümmert sich um Validierung, Speichern und EXIF-Extraktion.
+    # Diese Schleife ist nur noch für die Datenbankoperationen zuständig.
     for file in files:
-        # Überprüfung: ist die hochgeladene Datei wirklich ein Bild?
-        # "not X" = True wenn X leer/None/False ist
-        if not file.content_type or not file.content_type.startswith("image/"):
+        # await = warte bis _process_upload() fertig ist
+        # None bedeutet: keine gültige Bilddatei → überspringen
+        photo = await _process_upload(file, UPLOAD_DIR, album_id)
+        if photo is None:
             continue  # "continue" überspringt den Rest und geht zum nächsten file
 
-        # await = warte bis die Datei komplett gelesen ist
-        data = await file.read()
-        meta = extract_metadata(data)  # GPS und Datum aus den Bilddaten lesen
-
-        # --- PYTHON LERNEN: String-Methoden ---
-        # os.path.splitext("foto.jpg") → ("foto", ".jpg")
-        # [1] = zweites Element (Index 0 = erstes, 1 = zweites)
-        # .lower() macht alle Buchstaben klein
-        # "or" gibt den ersten "wahren" Wert zurück: wenn links leer → nimm rechts
-        ext = os.path.splitext(file.filename or "photo.jpg")[1].lower() or ".jpg"
-
-        # uuid4().hex erzeugt eine zufällige ID ohne Bindestriche
-        filename = f"{uuid.uuid4().hex}{ext}"  # f-String: {variable} wird ersetzt
-        filepath = os.path.join(UPLOAD_DIR, filename)
-
-        # --- PYTHON LERNEN: Asynchrones Dateischreiben mit aiofiles ---
-        # "async with" = asynchrone Version von "with" – öffnet und schließt sicher.
-        # "await f.write(data)" schreibt ohne den Event-Loop zu blockieren.
-        async with aiofiles.open(filepath, "wb") as f:
-            await f.write(data)
-
-        # --- PYTHON LERNEN: Objekt erstellen und zur Datenbank hinzufügen ---
-        # Photo(...) erstellt ein neues Photo-Objekt mit den angegebenen Attributen
-        photo = Photo(
-            filename=filename,
-            original_name=file.filename or filename,
-            album_id=album_id,
-            exif_lat=meta["lat"],   # Zugriff auf dict mit ["schlüssel"]
-            exif_lng=meta["lng"],
-            taken_at=meta["taken_at"],
-            # Ternärer Ausdruck: wenn lat vorhanden → "exif", sonst None
-            location_source="exif" if meta["lat"] is not None else None,
-        )
         db.add(photo)   # Objekt zur Session hinzufügen (noch nicht gespeichert)
         db.flush()      # In die DB schreiben ohne Commit (um die ID zu bekommen)
         results.append(photo)  # .append() fügt ein Element ans Ende der Liste

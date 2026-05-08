@@ -30,15 +30,14 @@ def list_albums(db: Session = Depends(get_db)):
     )
     # dict() macht aus der Liste von Tupeln ein Wörterbuch: {album_id: count}
 
-    result = []
-    # --- PYTHON LERNEN: for-Schleife + Objekttransformation ---
-    for album in albums:
-        # model_validate() erstellt ein Pydantic-Objekt aus einem SQLAlchemy-Objekt
-        out = AlbumOut.model_validate(album)
-        # .get(key, default) = suche "album.id" im dict; wenn nicht gefunden: 0
-        out.photo_count = counts.get(album.id, 0)
-        result.append(out)
-    return result
+    # --- PYTHON LERNEN: List Comprehension + model_copy() ---
+    # model_copy(update={...}) erstellt eine Kopie des Pydantic-Objekts mit neuen Feldern.
+    # Das ist expliziter als eine nachträgliche Zuweisung – der Leser sieht sofort,
+    # dass photo_count bewusst überschrieben wird.
+    return [
+        AlbumOut.model_validate(a).model_copy(update={"photo_count": counts.get(a.id, 0)})
+        for a in albums
+    ]
 
 
 # --- PYTHON LERNEN: POST-Route zum Erstellen ---
@@ -50,9 +49,8 @@ def create_album(body: AlbumCreate, db: Session = Depends(get_db)):
     db.add(album)
     db.commit()
     db.refresh(album)
-    out = AlbumOut.model_validate(album)
-    out.photo_count = 0  # Neues Album hat noch keine Fotos
-    return out
+    # Neues Album hat noch keine Fotos → Standardwert 0 aus AlbumOut.photo_count greift
+    return AlbumOut.model_validate(album)
 
 
 # --- PYTHON LERNEN: Bedingte Updates (Partial Update) ---
@@ -71,10 +69,8 @@ def update_album(album_id: int, body: AlbumUpdate, db: Session = Depends(get_db)
     db.refresh(album)
     # db.scalar() gibt einen einzelnen Wert zurück (nicht eine Liste)
     count = db.scalar(select(func.count()).where(Photo.album_id == album_id))
-    out = AlbumOut.model_validate(album)
     # "or 0" = falls count None ist (kein Foto), nimm 0
-    out.photo_count = count or 0
-    return out
+    return AlbumOut.model_validate(album).model_copy(update={"photo_count": count or 0})
 
 
 # --- PYTHON LERNEN: DELETE-Route ---
