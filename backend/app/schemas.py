@@ -5,10 +5,10 @@ from pydantic import BaseModel
 
 from datetime import datetime
 
-# --- PYTHON LERNEN: typing-Modul ---
-# Optional[X] bedeutet: der Wert kann vom Typ X sein ODER None (leer).
-# Ab Python 3.10 kann man auch "X | None" schreiben – dasselbe Konzept.
-from typing import Optional
+# --- PYTHON LERNEN: Moderne Typ-Syntax (Python 3.10+) ---
+# "X | None" bedeutet: der Wert kann X sein ODER leer (None).
+# Das ersetzt das ältere "Optional[X]" aus dem typing-Modul – gleiche Bedeutung, kürzere Schreibweise.
+# Da dieses Projekt Python 3.13 voraussetzt, nutzen wir die moderne Variante überall.
 
 
 # --- PYTHON LERNEN: Datenklassen mit Typ-Annotationen ---
@@ -19,21 +19,20 @@ class PhotoOut(BaseModel):
     id: int                        # int = ganze Zahl
     filename: str                  # str = Text
     original_name: str
-    album_id: Optional[int]        # Optional = kann auch None sein
-    exif_lat: Optional[float]      # float = Dezimalzahl
-    exif_lng: Optional[float]
-    manual_lat: Optional[float]
-    manual_lng: Optional[float]
-    lat: Optional[float]
-    lng: Optional[float]
+    album_id: int | None           # int | None = kann auch leer sein
+    exif_lat: float | None         # float = Dezimalzahl
+    exif_lng: float | None
+    manual_lat: float | None
+    manual_lng: float | None
+    lat: float | None
+    lng: float | None
     gps_type: str
-    location_name: Optional[str]
-    location_source: Optional[str]
-    taken_at: Optional[datetime]   # datetime = Datum + Uhrzeit
+    location_name: str | None
+    location_source: str | None
+    taken_at: datetime | None      # datetime = Datum + Uhrzeit
     uploaded_at: datetime
 
-    # --- PYTHON LERNEN: Verschachtelte Klassen und model_config ---
-    # model_config ist ein dict mit Einstellungen für Pydantic.
+    # --- PYTHON LERNEN: model_config ---
     # from_attributes=True: Pydantic kann Daten auch aus Objekten lesen (nicht nur aus dicts).
     # Das brauchen wir, weil SQLAlchemy-Objekte keine dicts sind.
     model_config = {"from_attributes": True}
@@ -43,8 +42,7 @@ class PhotoOut(BaseModel):
 class PhotoGpsUpdate(BaseModel):
     lat: float
     lng: float
-    # Standardwert None: wenn nicht angegeben, ist location_name leer
-    location_name: Optional[str] = None
+    location_name: str | None = None  # Standardwert None: wenn nicht angegeben, bleibt es leer
 
 
 # Schema zum Erstellen eines Albums (nur Eingabefelder)
@@ -66,5 +64,5 @@ class AlbumOut(BaseModel):
 
 # Schema für Aktualisierungen – alle Felder optional (Partial Update)
 class AlbumUpdate(BaseModel):
-    name: Optional[str] = None        # None = nicht geändert
-    description: Optional[str] = None
+    name: str | None = None         # None = nicht geändert
+    description: str | None = None

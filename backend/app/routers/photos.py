@@ -7,12 +7,16 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse   # Gibt eine Datei als Antwort zurück
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from typing import Optional
 
 # --- PYTHON LERNEN: uuid für eindeutige IDs ---
 # uuid4() erzeugt eine zufällige, weltweit eindeutige ID (z.B. für Dateinamen)
 import uuid
 import os
+
+# --- PYTHON LERNEN: aiofiles für asynchrones Dateischreiben ---
+# aiofiles öffnet Dateien ohne den Event-Loop zu blockieren.
+# Ohne aiofiles würde "with open(...)" alle anderen Anfragen pausieren.
+import aiofiles
 
 # Relative Imports aus dem Elternpaket (..= eine Ebene höher)
 from ..database import get_db
@@ -37,7 +41,7 @@ router = APIRouter(prefix="/photos", tags=["photos"])
 # Er sagt FastAPI: "Wenn jemand GET /photos/ aufruft, führe list_photos() aus."
 # response_model=list[PhotoOut] → FastAPI wandelt das Ergebnis automatisch in JSON um.
 @router.get("/", response_model=list[PhotoOut])
-def list_photos(album_id: Optional[int] = None, db: Session = Depends(get_db)):
+def list_photos(album_id: int | None = None, db: Session = Depends(get_db)):
     # --- PYTHON LERNEN: Depends() ---
     # Depends(get_db) sagt FastAPI: ruf get_db() auf und übergib das Ergebnis als "db".
     # Das ist "Dependency Injection" – die Funktion bekommt ihre Abhängigkeiten von außen.
@@ -58,7 +62,7 @@ def list_photos(album_id: Optional[int] = None, db: Session = Depends(get_db)):
 @router.post("/upload", response_model=list[PhotoOut])
 async def upload_photos(
     files: list[UploadFile] = File(...),   # File(...) = Pflichtfeld (... = required)
-    album_id: Optional[int] = None,
+    album_id: int | None = None,
     db: Session = Depends(get_db),
 ):
     results = []  # Leere Liste, wird mit hochgeladenen Fotos gefüllt
@@ -86,11 +90,11 @@ async def upload_photos(
         filename = f"{uuid.uuid4().hex}{ext}"  # f-String: {variable} wird ersetzt
         filepath = os.path.join(UPLOAD_DIR, filename)
 
-        # --- PYTHON LERNEN: Dateien schreiben ---
-        # "with open(...) as f:" öffnet eine Datei und schließt sie automatisch am Ende.
-        # "wb" = write binary (Binärdaten schreiben)
-        with open(filepath, "wb") as f:
-            f.write(data)
+        # --- PYTHON LERNEN: Asynchrones Dateischreiben mit aiofiles ---
+        # "async with" = asynchrone Version von "with" – öffnet und schließt sicher.
+        # "await f.write(data)" schreibt ohne den Event-Loop zu blockieren.
+        async with aiofiles.open(filepath, "wb") as f:
+            await f.write(data)
 
         # --- PYTHON LERNEN: Objekt erstellen und zur Datenbank hinzufügen ---
         # Photo(...) erstellt ein neues Photo-Objekt mit den angegebenen Attributen
@@ -146,8 +150,9 @@ def update_gps(photo_id: int, body: PhotoGpsUpdate, db: Session = Depends(get_db
     return photo
 
 
+# int | None = None macht album_id explizit optional (kein Pflichtfeld)
 @router.patch("/{photo_id}/album", response_model=PhotoOut)
-def assign_album(photo_id: int, album_id: Optional[int], db: Session = Depends(get_db)):
+def assign_album(photo_id: int, album_id: int | None = None, db: Session = Depends(get_db)):
     photo = db.get(Photo, photo_id)
     if not photo:
         raise HTTPException(404, "Photo not found")

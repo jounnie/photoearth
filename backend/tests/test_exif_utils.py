@@ -7,9 +7,10 @@ import pytest
 from PIL import Image
 
 from app.exif_utils import extract_metadata
+from tests.helpers import to_dms  # geteilte Hilfsfunktion, kein Duplikat
 
 
-# ── Hilfsfunktionen ───────────────────────────────────────────────────────────
+# ── Lokale Hilfsfunktionen ────────────────────────────────────────────────────
 
 def _jpeg_no_exif() -> bytes:
     buf = io.BytesIO()
@@ -18,13 +19,6 @@ def _jpeg_no_exif() -> bytes:
 
 
 def _jpeg_with_gps(lat: float, lng: float) -> bytes:
-    def to_dms(v: float):
-        v = abs(v)
-        d = int(v)
-        m = int((v - d) * 60)
-        s = round(((v - d) * 60 - m) * 60 * 1000)
-        return [(d, 1), (m, 1), (s, 1000)]
-
     gps_ifd = {
         piexif.GPSIFD.GPSLatitudeRef: b"N" if lat >= 0 else b"S",
         piexif.GPSIFD.GPSLatitude: to_dms(lat),

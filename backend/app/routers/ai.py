@@ -1,19 +1,21 @@
 # --- PYTHON LERNEN: Externe Bibliotheken ---
 # "anthropic" ist das offizielle Python-SDK für die Claude-KI-API.
 # Es muss installiert sein (pip install anthropic).
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
-import anthropic  # Anthropic SDK für Claude
-
-# --- PYTHON LERNEN: base64 ---
-# base64 kodiert Binärdaten (Bytes) als Text – nötig um Bilder per JSON/API zu senden.
+import json  # Eingebautes Modul – Imports gehören immer an den Anfang der Datei
 import base64
 import os
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from pydantic import BaseModel, ValidationError  # ValidationError = Pydantic-Fehlerklasse
+import anthropic  # Anthropic SDK für Claude
 
 from ..database import get_db
 from ..models import Photo
 from ..schemas import PhotoOut
+
+# --- PYTHON LERNEN: base64 ---
+# base64 kodiert Binärdaten (Bytes) als Text – nötig um Bilder per JSON/API zu senden.
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 
@@ -26,11 +28,13 @@ client = anthropic.Anthropic()
 
 
 # --- PYTHON LERNEN: Pydantic-Modell für die KI-Antwort ---
+# float | None = Dezimalzahl ODER leer (wenn die KI den Ort nicht bestimmen kann).
+# Pydantic validiert automatisch: passt der JSON-String dieses Schema? Wenn nicht → Fehler.
 class LocationResult(BaseModel):
-    lat: float
-    lng: float
-    location_name: str
-    confidence: str   # Erlaubte Werte: "high" | "medium" | "low"
+    lat: float | None
+    lng: float | None
+    location_name: str | None = None
+    confidence: str              # Erlaubte Werte: "high" | "medium" | "low"
     reasoning: str
 
 
@@ -95,32 +99,23 @@ def detect_location(photo_id: int, db: Session = Depends(get_db)):
         }],
     )
 
-    # --- PYTHON LERNEN: JSON parsen ---
-    # json ist ein eingebautes Modul zum Lesen/Schreiben von JSON.
-    # Import innerhalb der Funktion ist erlaubt (aber unüblich – normalerweise oben).
-    import json
+    # --- PYTHON LERNEN: Pydantic für JSON-Validierung nutzen ---
+    # model_validate_json() parst den JSON-String UND validiert die Felder automatisch.
+    # Bei ungültigem JSON oder falschem Schema wirft es ValidationError.
     try:
-        # message.content[0].text = der Antworttext der KI (erstes Element der Liste)
-        # json.loads() konvertiert JSON-String → Python-dict
-        result = json.loads(message.content[0].text)
-
-        # .get() auf dict: sicher lesen ohne KeyError wenn Schlüssel fehlt
-        if result.get("lat") is None or result.get("lng") is None:
-            raise HTTPException(422, "Could not determine location from image")
-
-        # float() konvertiert sicher zu Dezimalzahl (auch wenn KI int zurückgibt)
-        photo.manual_lat = float(result["lat"])
-        photo.manual_lng = float(result["lng"])
-        photo.location_name = result.get("location_name")
-        photo.location_source = "ai"
-        db.commit()
-        db.refresh(photo)
-        return photo
-
-    # --- PYTHON LERNEN: Mehrere Fehlertypen abfangen ---
-    # json.JSONDecodeError: KI hat kein gültiges JSON gesendet
-    # KeyError: erwarteter Schlüssel fehlt im dict
-    # ValueError: Typkonvertierung (float()) fehlgeschlagen
-    except (json.JSONDecodeError, KeyError, ValueError) as e:
-        # f-String mit Variable: {e} wird durch die Fehlermeldung ersetzt
+        result = LocationResult.model_validate_json(message.content[0].text)
+    # --- PYTHON LERNEN: except mit einer Fehlerklasse ---
+    # ValidationError fängt sowohl JSON-Fehler als auch Schema-Fehler ab.
+    except ValidationError as e:
         raise HTTPException(500, f"Failed to parse AI response: {e}")
+
+    if result.lat is None or result.lng is None:
+        raise HTTPException(422, "Could not determine location from image")
+
+    photo.manual_lat = result.lat
+    photo.manual_lng = result.lng
+    photo.location_name = result.location_name
+    photo.location_source = "ai"
+    db.commit()
+    db.refresh(photo)
+    return photo

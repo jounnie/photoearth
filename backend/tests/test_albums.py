@@ -27,13 +27,13 @@ def test_create_album_default_description(client):
 def test_list_albums_sorted_newest_first(client):
     client.post("/api/albums/", json={"name": "Erst"})
     client.post("/api/albums/", json={"name": "Dann"})
-    names = [a["name"] for a in client.get("/api/albums/").json()]
-    assert names == ["Dann", "Erst"]
+    albums = client.get("/api/albums/").json()
+    # Auto-Increment garantiert: späterer INSERT → höhere ID → steht zuerst
+    assert albums[0]["id"] > albums[1]["id"]
 
 
 def test_list_albums_includes_photo_count(client, make_jpeg):
     album = client.post("/api/albums/", json={"name": "Mit Fotos"}).json()
-    # Zwei Fotos hochladen und dem Album zuweisen
     for _ in range(2):
         client.post(
             "/api/photos/upload",
@@ -83,5 +83,4 @@ def test_delete_album_cascades_photos(client, make_jpeg):
         params={"album_id": album["id"]},
     )
     client.delete(f"/api/albums/{album['id']}")
-    # Album gelöscht → Foto muss ebenfalls weg sein
     assert client.get("/api/photos/").json() == []
