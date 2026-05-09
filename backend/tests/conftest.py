@@ -16,6 +16,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
 from app.main import app
+from tests.helpers import to_dms
 
 
 @pytest.fixture
@@ -52,7 +53,6 @@ def client(db_session, tmp_path, monkeypatch):
     - isolierter In-Memory-Datenbank (kein echtes photoearth.db)
     - temporärem Upload-Verzeichnis (kein Schreiben in app/uploads/)
     """
-    # UPLOAD_DIR in beiden Routern auf tmp_path umlenken
     monkeypatch.setattr("app.routers.photos.UPLOAD_DIR", str(tmp_path))
     monkeypatch.setattr("app.routers.ai.UPLOAD_DIR", str(tmp_path))
 
@@ -72,20 +72,13 @@ def make_jpeg():
 
     Verwendung im Test:
         def test_foo(make_jpeg):
-            data = make_jpeg()               # ohne GPS
+            data = make_jpeg()                   # ohne GPS
             data = make_jpeg(lat=47.3, lng=8.5)  # mit GPS
     """
     def _make(lat: float | None = None, lng: float | None = None) -> bytes:
         img = Image.new("RGB", (50, 50), color=(100, 150, 200))
 
         if lat is not None and lng is not None:
-            def to_dms(value: float):
-                value = abs(value)
-                d = int(value)
-                m = int((value - d) * 60)
-                s = round(((value - d) * 60 - m) * 60 * 1000)
-                return [(d, 1), (m, 1), (s, 1000)]
-
             gps_ifd = {
                 piexif.GPSIFD.GPSLatitudeRef: b"N" if lat >= 0 else b"S",
                 piexif.GPSIFD.GPSLatitude: to_dms(lat),

@@ -36,6 +36,15 @@ def test_upload_photo_with_gps(client, make_jpeg):
     assert photo["lat"] == pytest.approx(47.37, abs=0.01)
 
 
+def test_upload_photo_gps_zero(client, make_jpeg):
+    # GPS-Koordinaten (0.0, 0.0) mitten im Atlantik → gps_type "zero" (wahrscheinlich fehlerhaft)
+    resp = client.post(
+        "/api/photos/upload",
+        files=[("files", ("zero.jpg", make_jpeg(lat=0.0, lng=0.0), "image/jpeg"))],
+    )
+    assert resp.json()[0]["gps_type"] == "zero"
+
+
 def test_upload_multiple_photos(client, make_jpeg):
     resp = client.post(
         "/api/photos/upload",
@@ -56,8 +65,16 @@ def test_upload_skips_non_images(client, make_jpeg):
             ("files", ("real.jpg", make_jpeg(), "image/jpeg")),
         ],
     )
-    # Nur das echte Bild wird gespeichert
     assert len(resp.json()) == 1
+
+
+def test_upload_no_valid_images_returns_empty_list(client):
+    resp = client.post(
+        "/api/photos/upload",
+        files=[("files", ("doc.pdf", b"pdf content", "application/pdf"))],
+    )
+    assert resp.status_code == 200
+    assert resp.json() == []
 
 
 def test_upload_assigns_album(client, make_jpeg):
@@ -123,7 +140,6 @@ def test_update_gps(client, make_jpeg):
     assert data["location_name"] == "München, Deutschland"
     assert data["location_source"] == "manual"
     assert data["gps_type"] == "ok"
-    # manual_lat hat Vorrang vor exif_lat
     assert data["lat"] == pytest.approx(48.137)
 
 
@@ -135,7 +151,6 @@ def test_update_gps_overrides_exif(client, make_jpeg):
 
     client.patch(f"/api/photos/{photo_id}/gps", json={"lat": 48.0, "lng": 11.0})
     data = client.get("/api/photos/").json()[0]
-    # lat/lng geben den manuellen Wert zurück
     assert data["lat"] == pytest.approx(48.0)
     assert data["exif_lat"] == pytest.approx(10.0, abs=0.1)  # EXIF bleibt erhalten
 
@@ -155,6 +170,20 @@ def test_assign_album(client, make_jpeg):
     resp = client.patch(f"/api/photos/{photo_id}/album", params={"album_id": album_id})
     assert resp.status_code == 200
     assert resp.json()["album_id"] == album_id
+
+
+def test_remove_album_assignment(client, make_jpeg):
+    album_id = client.post("/api/albums/", json={"name": "Album"}).json()["id"]
+    photo_id = client.post(
+        "/api/photos/upload",
+        files=[("files", ("p.jpg", make_jpeg(), "image/jpeg"))],
+        params={"album_id": album_id},
+    ).json()[0]["id"]
+
+    # Ohne album_id-Parameter → album_id wird auf None gesetzt
+    resp = client.patch(f"/api/photos/{photo_id}/album")
+    assert resp.status_code == 200
+    assert resp.json()["album_id"] is None
 
 
 def test_delete_photo(client, make_jpeg):

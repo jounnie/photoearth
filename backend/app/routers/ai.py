@@ -1,19 +1,21 @@
 # --- PYTHON LERNEN: Externe Bibliotheken ---
 # "anthropic" ist das offizielle Python-SDK für die Claude-KI-API.
 # Es muss installiert sein (pip install anthropic).
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
-import anthropic  # Anthropic SDK für Claude
-
-# --- PYTHON LERNEN: base64 ---
-# base64 kodiert Binärdaten (Bytes) als Text – nötig um Bilder per JSON/API zu senden.
+import json  # Eingebautes Modul – Imports gehören immer an den Anfang der Datei
 import base64
 import os
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from pydantic import BaseModel, ValidationError  # ValidationError = Pydantic-Fehlerklasse
+import anthropic  # Anthropic SDK für Claude
 
 from ..database import get_db
 from ..models import Photo
 from ..schemas import PhotoOut
+
+# --- PYTHON LERNEN: base64 ---
+# base64 kodiert Binärdaten (Bytes) als Text – nötig um Bilder per JSON/API zu senden.
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 
@@ -25,12 +27,29 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 client = anthropic.Anthropic()
 
 
+# --- PYTHON LERNEN: Private Hilfsfunktion (Single Responsibility) ---
+# Eine Funktion, eine Aufgabe: Datei lesen und base64-kodieren.
+# Der Unterstrich am Anfang signalisiert: "nur für dieses Modul gedacht".
+def _load_image_as_base64(filepath: str) -> tuple[str, str]:
+    """Gibt (base64_data, media_type) zurück."""
+    ext = os.path.splitext(filepath)[1].lower()
+    media_type = {
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif",
+    }.get(ext, "image/jpeg")
+    with open(filepath, "rb") as f:
+        image_data = base64.standard_b64encode(f.read()).decode()
+    return image_data, media_type
+
+
 # --- PYTHON LERNEN: Pydantic-Modell für die KI-Antwort ---
+# float | None = Dezimalzahl ODER leer (wenn die KI den Ort nicht bestimmen kann).
+# Pydantic validiert automatisch: passt der JSON-String dieses Schema? Wenn nicht → Fehler.
 class LocationResult(BaseModel):
-    lat: float
-    lng: float
-    location_name: str
-    confidence: str   # Erlaubte Werte: "high" | "medium" | "low"
+    lat: float | None
+    lng: float | None
+    location_name: str | None = None
+    confidence: str              # Erlaubte Werte: "high" | "medium" | "low"
     reasoning: str
 
 
@@ -45,20 +64,9 @@ def detect_location(photo_id: int, db: Session = Depends(get_db)):
     if not os.path.exists(path):
         raise HTTPException(404, "Image file not found")
 
-    # --- PYTHON LERNEN: Datei lesen und base64 kodieren ---
-    # "rb" = read binary (Binärdaten lesen, keine Textdatei)
-    with open(path, "rb") as f:
-        # base64.standard_b64encode() gibt Bytes zurück
-        # .decode() konvertiert Bytes → String (UTF-8)
-        image_data = base64.standard_b64encode(f.read()).decode()
-
-    # --- PYTHON LERNEN: dict als Lookup-Tabelle ---
-    # .get(key, default) sucht den Schlüssel; falls nicht gefunden: "image/jpeg"
-    ext = os.path.splitext(photo.filename)[1].lower()
-    media_type = {
-        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-        ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif",
-    }.get(ext, "image/jpeg")
+    # --- PYTHON LERNEN: Hilfsfunktion aufrufen ---
+    # Tuple Unpacking: zwei Rückgabewerte auf einmal in zwei Variablen speichern.
+    image_data, media_type = _load_image_as_base64(path)
 
     # --- PYTHON LERNEN: KI-API aufrufen ---
     # client.messages.create() sendet eine Anfrage an die Claude-API.
@@ -95,32 +103,23 @@ def detect_location(photo_id: int, db: Session = Depends(get_db)):
         }],
     )
 
-    # --- PYTHON LERNEN: JSON parsen ---
-    # json ist ein eingebautes Modul zum Lesen/Schreiben von JSON.
-    # Import innerhalb der Funktion ist erlaubt (aber unüblich – normalerweise oben).
-    import json
+    # --- PYTHON LERNEN: Pydantic für JSON-Validierung nutzen ---
+    # model_validate_json() parst den JSON-String UND validiert die Felder automatisch.
+    # Bei ungültigem JSON oder falschem Schema wirft es ValidationError.
     try:
-        # message.content[0].text = der Antworttext der KI (erstes Element der Liste)
-        # json.loads() konvertiert JSON-String → Python-dict
-        result = json.loads(message.content[0].text)
-
-        # .get() auf dict: sicher lesen ohne KeyError wenn Schlüssel fehlt
-        if result.get("lat") is None or result.get("lng") is None:
-            raise HTTPException(422, "Could not determine location from image")
-
-        # float() konvertiert sicher zu Dezimalzahl (auch wenn KI int zurückgibt)
-        photo.manual_lat = float(result["lat"])
-        photo.manual_lng = float(result["lng"])
-        photo.location_name = result.get("location_name")
-        photo.location_source = "ai"
-        db.commit()
-        db.refresh(photo)
-        return photo
-
-    # --- PYTHON LERNEN: Mehrere Fehlertypen abfangen ---
-    # json.JSONDecodeError: KI hat kein gültiges JSON gesendet
-    # KeyError: erwarteter Schlüssel fehlt im dict
-    # ValueError: Typkonvertierung (float()) fehlgeschlagen
-    except (json.JSONDecodeError, KeyError, ValueError) as e:
-        # f-String mit Variable: {e} wird durch die Fehlermeldung ersetzt
+        result = LocationResult.model_validate_json(message.content[0].text)
+    # --- PYTHON LERNEN: except mit einer Fehlerklasse ---
+    # ValidationError fängt sowohl JSON-Fehler als auch Schema-Fehler ab.
+    except ValidationError as e:
         raise HTTPException(500, f"Failed to parse AI response: {e}")
+
+    if result.lat is None or result.lng is None:
+        raise HTTPException(422, "Could not determine location from image")
+
+    photo.manual_lat = result.lat
+    photo.manual_lng = result.lng
+    photo.location_name = result.location_name
+    photo.location_source = "ai"
+    db.commit()
+    db.refresh(photo)
+    return photo

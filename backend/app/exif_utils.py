@@ -1,17 +1,28 @@
 # --- PYTHON LERNEN: Pillow (PIL) ---
 # PIL / Pillow ist eine Bibliothek zum Lesen und Bearbeiten von Bilddateien.
 # TAGS und GPSTAGS sind dicts, die numerische EXIF-Codes in lesbare Namen übersetzen.
+# IFD (Image File Directory) = Zeiger auf Sub-Tabellen innerhalb der EXIF-Daten.
 from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
+from PIL.ExifTags import TAGS, GPSTAGS, IFD
 
 from datetime import datetime
 
-# --- PYTHON LERNEN: typing für Typ-Hinweise ---
-# Optional[float] = float oder None – hilft beim Verstehen des Codes
-from typing import Optional
-
 # io = Input/Output-Modul, damit wir Bytes wie eine Datei behandeln können
 import io
+
+# --- PYTHON LERNEN: TypedDict ---
+# TypedDict definiert ein dict mit festen Schlüsseln und bekannten Typen.
+# Vorteil: IDE-Unterstützung und Typ-Prüfung – ohne Runtime-Overhead.
+from typing import TypedDict
+
+
+# --- PYTHON LERNEN: TypedDict-Definition ---
+# Jede Klasse die TypedDict erbt ist ein gewöhnliches Python-dict,
+# aber der Typ-Checker weiß welche Schlüssel und Typen erwartet werden.
+class ExifMetadata(TypedDict):
+    lat: float | None
+    lng: float | None
+    taken_at: datetime | None
 
 
 # --- PYTHON LERNEN: Funktionen mit Typ-Annotationen ---
@@ -20,19 +31,35 @@ import io
 # -> dict sagt: die Funktion gibt ein dict zurück.
 # Der Unterstrich am Anfang (_get_exif) ist eine Konvention: "privat, nicht von außen benutzen".
 def _get_exif(image: Image.Image) -> dict:
-    raw = image._getexif()  # Rohe EXIF-Daten aus dem Bild holen
-    if not raw:             # "not raw" = True wenn raw leer/None ist
-        return {}           # Leeres dict zurückgeben (keine EXIF-Daten)
+    # image.getexif() ist die öffentliche Pillow-API (seit Pillow 6.0).
+    # Sie gibt ein hierarchisches Exif-Objekt zurück – GPS und Datum liegen in Sub-IFDs.
+    exif = image.getexif()
+    if not exif:             # "not exif" = True wenn keine EXIF-Daten vorhanden
+        return {}
+
     # --- PYTHON LERNEN: Dict Comprehension ---
     # {ausdruck for variable in iterable} erzeugt ein dict in einer Zeile.
-    # TAGS.get(tag, tag) = schau im TAGS-dict nach; falls nicht gefunden, nimm tag selbst.
-    return {TAGS.get(tag, tag): value for tag, value in raw.items()}
+    # Haupt-IFD: enthält DateTime, Make, Model, ...
+    result = {TAGS.get(tag, tag): value for tag, value in exif.items()}
+
+    # Exif-Sub-IFD: enthält DateTimeOriginal, ExposureTime, ...
+    # get_ifd() liest eine verschachtelte Sub-Tabelle aus.
+    # setdefault schreibt nur wenn der Schlüssel noch nicht vorhanden ist.
+    for tag, value in exif.get_ifd(IFD.Exif).items():
+        result.setdefault(TAGS.get(tag, tag), value)
+
+    # GPS-Sub-IFD: enthält GPSLatitude, GPSLongitude, ...
+    gps_ifd = exif.get_ifd(IFD.GPSInfo)
+    if gps_ifd:
+        result["GPSInfo"] = dict(gps_ifd)  # als normales dict speichern
+
+    return result
 
 
 # --- PYTHON LERNEN: Verschachtelte Funktionen ---
-# tuple[Optional[float], Optional[float]] = die Funktion gibt ein Tupel mit zwei floats zurück.
+# tuple[float | None, float | None] = die Funktion gibt ein Tupel mit zwei floats zurück.
 # Tupel: runde Klammern (), unveränderlich, mehrere Werte auf einmal
-def _parse_gps(gps_info: dict) -> tuple[Optional[float], Optional[float]]:
+def _parse_gps(gps_info: dict) -> tuple[float | None, float | None]:
     # "to_decimal" ist eine innere Funktion – sie existiert nur innerhalb von _parse_gps.
     def to_decimal(values, ref):
         # Tuple Unpacking: drei Werte aus der Liste auf einmal zuweisen
@@ -60,7 +87,7 @@ def _parse_gps(gps_info: dict) -> tuple[Optional[float], Optional[float]]:
 
 # --- PYTHON LERNEN: bytes als Parameter ---
 # "data: bytes" = die Funktion erwartet rohe Binärdaten (den Inhalt einer Datei)
-def extract_metadata(data: bytes) -> dict:
+def extract_metadata(data: bytes) -> ExifMetadata:
     # io.BytesIO() macht aus einem bytes-Objekt ein "Datei-ähnliches Objekt"
     # So kann Pillow es wie eine echte Datei öffnen, ohne sie auf der Festplatte zu speichern.
     image = Image.open(io.BytesIO(data))
@@ -85,6 +112,6 @@ def extract_metadata(data: bytes) -> dict:
             # break beendet die Schleife sofort (wir haben gefunden was wir suchten)
             break
 
-    # --- PYTHON LERNEN: dict zurückgeben ---
-    # dict mit geschweiften Klammern {} und "Schlüssel": Wert
-    return {"lat": lat, "lng": lng, "taken_at": taken_at}
+    # --- PYTHON LERNEN: TypedDict-Instanz zurückgeben ---
+    # ExifMetadata(...) sieht aus wie ein Konstruktor, erzeugt aber ein normales dict.
+    return ExifMetadata(lat=lat, lng=lng, taken_at=taken_at)
