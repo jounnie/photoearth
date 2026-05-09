@@ -2,8 +2,10 @@
 # FastAPI ist ein Web-Framework für Python – es empfängt HTTP-Anfragen und sendet Antworten.
 # "from X import Y" importiert nur Y aus dem Modul X (spart Speicher).
 import base64
+import logging
 import os
 import secrets
+import time
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  # Middleware = läuft bei jeder Anfrage
@@ -57,6 +59,54 @@ class _BasicAuthMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(_BasicAuthMiddleware)
+
+
+# --- PYTHON LERNEN: Logging ---
+# logging ist das eingebaute Python-Modul für strukturierte Log-Ausgaben.
+# getLogger(__name__) erzeugt einen Logger mit dem Namen des aktuellen Moduls.
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    # Format: Zeitstempel + Level + Nachricht
+    format="%(asctime)s %(levelname)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+
+class _RequestLogMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start = time.perf_counter()
+        response = await call_next(request)
+        duration_ms = (time.perf_counter() - start) * 1000
+
+        # Extract username from Basic Auth header for the audit trail.
+        # Falls back to "-" when auth is disabled (local dev).
+        user = "-"
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Basic "):
+            try:
+                decoded = base64.b64decode(auth[6:]).decode()
+                user = decoded.partition(":")[0] or "-"
+            except Exception:
+                pass
+
+        # Include query string when present (e.g. ?album_id=3 shows what was filtered)
+        path = request.url.path
+        if request.url.query:
+            path = f"{path}?{request.url.query}"
+
+        logger.info(
+            "%s %s %s user=%s %.0fms",
+            request.method,
+            path,
+            response.status_code,
+            user,
+            duration_ms,
+        )
+        return response
+
+
+app.add_middleware(_RequestLogMiddleware)
 
 # --- PYTHON LERNEN: Methoden aufrufen ---
 # app.add_middleware() ist eine Methode des app-Objekts.
