@@ -1,13 +1,16 @@
 # --- PYTHON LERNEN: FastAPI ---
 # FastAPI ist ein Web-Framework für Python – es empfängt HTTP-Anfragen und sendet Antworten.
 # "from X import Y" importiert nur Y aus dem Modul X (spart Speicher).
+import base64
+import os
+import secrets
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  # Middleware = läuft bei jeder Anfrage
 from fastapi.staticfiles import StaticFiles         # Für HTML/JS/CSS-Dateien
-
-# --- PYTHON LERNEN: Standardbibliothek ---
-# "os" ist immer dabei (eingebaut in Python). Kein pip install nötig.
-import os
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 # Relativer Import: "." = das aktuelle Paket (app/)
 from .database import engine, Base
@@ -18,10 +21,42 @@ from .routers import photos, albums, ai
 # falls sie noch nicht existieren (liest die Klassen aus models.py).
 Base.metadata.create_all(bind=engine)
 
-# --- PYTHON LERNEN: Objekte erstellen (Instanzen) ---
-# FastAPI() ruft den Konstruktor auf und erzeugt ein Objekt.
-# Das Objekt heißt "app" – FastAPI/uvicorn sucht nach diesem Namen.
 app = FastAPI(title="PhotoEarth API")
+
+
+# --- PYTHON LERNEN: Middleware-Klasse ---
+# Middleware läuft bei JEDER Anfrage, bevor sie die Route erreicht.
+# BaseHTTPMiddleware ist die Basisklasse von Starlette (das Framework unter FastAPI).
+class _BasicAuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Wenn PHOTOEARTH_PASSWORD nicht gesetzt ist → Auth deaktiviert (lokal)
+        password = os.environ.get("PHOTOEARTH_PASSWORD", "")
+        if not password:
+            return await call_next(request)
+
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Basic "):
+            try:
+                # base64-dekodieren: "dXNlcjpwYXNz" → "user:pass"
+                decoded = base64.b64decode(auth[6:]).decode()
+                username, _, pwd = decoded.partition(":")
+                expected_user = os.environ.get("PHOTOEARTH_USER", "admin")
+                # secrets.compare_digest verhindert Timing-Angriffe
+                if (secrets.compare_digest(username, expected_user) and
+                        secrets.compare_digest(pwd, password)):
+                    return await call_next(request)
+            except Exception:
+                pass
+
+        # WWW-Authenticate: Basic → Browser zeigt Login-Dialog
+        return Response(
+            "Unauthorized",
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="PhotoEarth"'},
+        )
+
+
+app.add_middleware(_BasicAuthMiddleware)
 
 # --- PYTHON LERNEN: Methoden aufrufen ---
 # app.add_middleware() ist eine Methode des app-Objekts.

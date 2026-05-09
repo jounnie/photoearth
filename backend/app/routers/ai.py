@@ -17,7 +17,10 @@ from ..schemas import PhotoOut
 # --- PYTHON LERNEN: base64 ---
 # base64 kodiert Binärdaten (Bytes) als Text – nötig um Bilder per JSON/API zu senden.
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+UPLOAD_DIR = os.environ.get(
+    "UPLOAD_DIR",
+    os.path.join(os.path.dirname(__file__), "..", "uploads"),
+)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
