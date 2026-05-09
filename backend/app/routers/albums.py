@@ -12,31 +12,26 @@ from ..schemas import AlbumCreate, AlbumOut, AlbumUpdate
 router = APIRouter(prefix="/albums", tags=["albums"])
 
 
-# --- PYTHON LERNEN: GET-Route mit komplexer Datenbankabfrage ---
+# --- PYTHON LERNEN: GET-Route mit JOIN-Datenbankabfrage ---
 @router.get("/", response_model=list[AlbumOut])
 def list_albums(db: Session = Depends(get_db)):
-    # SQL: SELECT * FROM albums ORDER BY created_at DESC
-    # .desc() = absteigend (neueste zuerst)
-    albums = db.scalars(select(Album).order_by(Album.created_at.desc())).all()
+    # --- PYTHON LERNEN: LEFT OUTER JOIN + GROUP BY in einer Abfrage ---
+    # Statt zwei separater Abfragen (Albums + Foto-Zählung) erledigt ein JOIN beides.
+    # LEFT OUTER JOIN: Alben ohne Fotos werden trotzdem zurückgegeben (count = 0).
+    # func.count(Photo.id) zählt nur Zeilen wo Photo.id nicht NULL ist (korrekt für LEFT JOIN).
+    rows = db.execute(
+        select(Album, func.count(Photo.id).label("photo_count"))
+        .outerjoin(Photo, Photo.album_id == Album.id)
+        .group_by(Album.id)
+        .order_by(Album.created_at.desc())
+    ).all()
 
-    # --- PYTHON LERNEN: Aggregation mit GROUP BY ---
-    # func.count() = COUNT(*) in SQL
-    # group_by = GROUP BY in SQL: zählt Fotos pro Album
-    # .all() gibt eine Liste von Tupeln zurück: [(album_id, count), ...]
-    counts = dict(
-        db.execute(
-            select(Photo.album_id, func.count()).group_by(Photo.album_id)
-        ).all()
-    )
-    # dict() macht aus der Liste von Tupeln ein Wörterbuch: {album_id: count}
-
-    # --- PYTHON LERNEN: List Comprehension + model_copy() ---
-    # model_copy(update={...}) erstellt eine Kopie des Pydantic-Objekts mit neuen Feldern.
-    # Das ist expliziter als eine nachträgliche Zuweisung – der Leser sieht sofort,
-    # dass photo_count bewusst überschrieben wird.
+    # --- PYTHON LERNEN: Tupel-Unpacking in List Comprehension ---
+    # Jede Zeile ist ein Tupel (Album-Objekt, Zahl).
+    # album, count = row trennt die beiden Werte.
     return [
-        AlbumOut.model_validate(a).model_copy(update={"photo_count": counts.get(a.id, 0)})
-        for a in albums
+        AlbumOut.model_validate(album).model_copy(update={"photo_count": count})
+        for album, count in rows
     ]
 
 

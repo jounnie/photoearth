@@ -109,11 +109,15 @@ async def upload_photos(
         if photo is None:
             continue  # "continue" überspringt den Rest und geht zum nächsten file
 
-        db.add(photo)   # Objekt zur Session hinzufügen (noch nicht gespeichert)
-        db.flush()      # In die DB schreiben ohne Commit (um die ID zu bekommen)
-        results.append(photo)  # .append() fügt ein Element ans Ende der Liste
+        db.add(photo)         # Objekt zur Session hinzufügen (noch nicht gespeichert)
+        results.append(photo)
 
-    db.commit()  # Alle Änderungen dauerhaft speichern
+    # --- PYTHON LERNEN: Batch-Flush statt flush() pro Datei ---
+    # Ein einziger flush() schreibt alle neuen Objekte auf einmal in die DB.
+    # Das spart N-1 Datenbank-Roundtrips bei einem Upload von N Dateien.
+    if results:
+        db.flush()   # IDs vergeben (noch kein Commit)
+    db.commit()      # Alle Änderungen dauerhaft speichern
     for p in results:
         db.refresh(p)  # Aktuellen Stand aus der DB neu laden
     return results

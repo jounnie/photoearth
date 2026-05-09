@@ -44,7 +44,8 @@ class Photo(Base):
 
     # --- PYTHON LERNEN: Optionale Spalten ---
     # nullable=True (oder kein Argument) = der Wert darf NULL (leer) sein
-    album_id = Column(Integer, ForeignKey("albums.id"), nullable=True)  # Fremdschlüssel
+    # index=True: Fremdschlüssel-Spalten werden oft als Filter genutzt → Index beschleunigt WHERE album_id = ?
+    album_id = Column(Integer, ForeignKey("albums.id"), nullable=True, index=True)
 
     exif_lat = Column(Float, nullable=True)   # GPS-Breitengrad aus den Bilddaten
     exif_lng = Column(Float, nullable=True)   # GPS-Längengrad aus den Bilddaten
@@ -55,7 +56,8 @@ class Photo(Base):
     location_source = Column(String, nullable=True)  # "exif" | "manual" | "ai"
 
     taken_at = Column(DateTime, nullable=True)
-    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    # index=True: wird bei ORDER BY uploaded_at DESC verwendet → verhindert Full-Table-Scan
+    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     # Rückbeziehung: Photo kennt sein Album (andere Richtung)
     album = relationship("Album", back_populates="photos")
