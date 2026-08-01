@@ -3,7 +3,6 @@ name: Backend (Java)
 on:
   push:
     branches: ["**"]
-  pull_request:
 
 jobs:
   build:
