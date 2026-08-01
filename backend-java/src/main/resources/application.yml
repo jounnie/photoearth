@@ -1,0 +1,32 @@
+server:
+  port: 8000
+
+spring:
+  datasource:
+    url: jdbc:sqlite:${photoearth.db-path:./photoearth.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
+      minimum-idle: 1
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.community.dialect.SQLiteDialect
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 200MB
+
+photoearth:
+  db-path: ./photoearth.db
+  upload-dir: app/uploads
+  frontend-dist-path: ../../frontend/dist
+  cors:
+    allowed-origin: http://localhost:5173
+  anthropic:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: claude-opus-5
