@@ -7,12 +7,11 @@ const DRAG_TYPE = 'application/photoearth-ids'
 
 interface Props {
   selectedAlbumId: number | null
-  selectedIds: Set<number>
   onSelect: (id: number | null) => void
   onClearSelection: () => void
 }
 
-export function AlbumPanel({ selectedAlbumId, selectedIds, onSelect, onClearSelection }: Props) {
+export function AlbumPanel({ selectedAlbumId, onSelect, onClearSelection }: Props) {
   const qc = useQueryClient()
   const [newName, setNewName] = useState('')
   const [dragOverId, setDragOverId] = useState<number | null>(null)

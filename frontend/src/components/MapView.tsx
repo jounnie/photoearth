@@ -33,10 +33,9 @@ interface Props {
   photos: Photo[]
   activePhoto: Photo | null
   onMarkerClick: (p: Photo) => void
-  onMapClick?: (lat: number, lng: number) => void
 }
 
-export function MapView({ photos, activePhoto, onMarkerClick, onMapClick }: Props) {
+export function MapView({ photos, activePhoto, onMarkerClick }: Props) {
   const validPhotos = photos.filter(p => p.gps_type === 'ok')
 
   return (
