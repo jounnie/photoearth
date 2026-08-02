@@ -24,7 +24,7 @@ spring:
 photoearth:
   db-path: ./photoearth.db
   upload-dir: app/uploads
-  frontend-dist-path: ../../frontend/dist
+  frontend-dist-path: ../frontend/dist
   cors:
     allowed-origin: http://localhost:5173
   anthropic:
