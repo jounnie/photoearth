@@ -13,7 +13,7 @@ router = APIRouter(prefix="/albums", tags=["albums"])
 
 
 # --- PYTHON LERNEN: GET-Route mit komplexer Datenbankabfrage ---
-@router.get("/", response_model=list[AlbumOut])
+@router.get("", response_model=list[AlbumOut])
 def list_albums(db: Session = Depends(get_db)):
     # SQL: SELECT * FROM albums ORDER BY created_at DESC
     # .desc() = absteigend (neueste zuerst)
@@ -42,7 +42,7 @@ def list_albums(db: Session = Depends(get_db)):
 
 # --- PYTHON LERNEN: POST-Route zum Erstellen ---
 # status_code=201 = "Created": der Standard für erfolgreiche POST-Anfragen
-@router.post("/", response_model=AlbumOut, status_code=201)
+@router.post("", response_model=AlbumOut, status_code=201)
 def create_album(body: AlbumCreate, db: Session = Depends(get_db)):
     # Neues Album-Objekt erstellen mit den Daten aus dem Request-Body
     album = Album(name=body.name, description=body.description)

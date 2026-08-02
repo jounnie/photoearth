@@ -7,7 +7,7 @@ import os
 import secrets
 import time
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware  # Middleware = läuft bei jeder Anfrage
 from fastapi.staticfiles import StaticFiles         # Für HTML/JS/CSS-Dateien
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -38,17 +38,22 @@ class _BasicAuthMiddleware(BaseHTTPMiddleware):
 
         auth = request.headers.get("Authorization", "")
         if auth.startswith("Basic "):
+            # Nur das Dekodieren der Credentials darf hier fehlschlagen (kaputter
+            # Header o.ä.) — call_next() bewusst AUSSERHALB des try, sonst würde
+            # jeder Fehler in der eigentlichen Route (z.B. fehlender API-Key)
+            # hier verschluckt und fälschlich als 401 gemeldet statt als 500.
             try:
                 # base64-dekodieren: "dXNlcjpwYXNz" → "user:pass"
                 decoded = base64.b64decode(auth[6:]).decode()
                 username, _, pwd = decoded.partition(":")
                 expected_user = os.environ.get("PHOTOEARTH_USER", "admin")
                 # secrets.compare_digest verhindert Timing-Angriffe
-                if (secrets.compare_digest(username, expected_user) and
-                        secrets.compare_digest(pwd, password)):
-                    return await call_next(request)
+                credentials_ok = (secrets.compare_digest(username, expected_user) and
+                                   secrets.compare_digest(pwd, password))
             except Exception:
-                pass
+                credentials_ok = False
+            if credentials_ok:
+                return await call_next(request)
 
         # WWW-Authenticate: Basic → Browser zeigt Login-Dialog
         return Response(
@@ -125,6 +130,17 @@ app.add_middleware(
 app.include_router(photos.router, prefix="/api")
 app.include_router(albums.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
+
+
+# --- PYTHON LERNEN: Catch-all für unbekannte /api-Pfade ---
+# Ohne das würde eine Anfrage wie POST /api/albumz (Tippfehler o.ä.), die von
+# keinem Router oben abgedeckt wird, bis zum StaticFiles-Mount unten "durchfallen"
+# und dort einen irreführenden 405 (nur GET/HEAD erlaubt) statt eines klaren
+# 404 zurückbekommen.
+@app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+async def api_not_found(path: str):
+    raise HTTPException(status_code=404, detail="Not Found")
+
 
 # --- PYTHON LERNEN: os.path für Dateipfade ---
 # os.path.join() verbindet Pfadteile plattformunabhängig (/ auf Linux, \ auf Windows).

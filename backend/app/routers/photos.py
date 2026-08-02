@@ -72,10 +72,10 @@ async def _process_upload(
 
 
 # --- PYTHON LERNEN: Dekoratoren (@) ---
-# @router.get("/") ist ein Dekorator: er "verpackt" die Funktion darunter.
-# Er sagt FastAPI: "Wenn jemand GET /photos/ aufruft, führe list_photos() aus."
+# @router.get("") ist ein Dekorator: er "verpackt" die Funktion darunter.
+# Er sagt FastAPI: "Wenn jemand GET /photos aufruft, führe list_photos() aus."
 # response_model=list[PhotoOut] → FastAPI wandelt das Ergebnis automatisch in JSON um.
-@router.get("/", response_model=list[PhotoOut])
+@router.get("", response_model=list[PhotoOut])
 def list_photos(album_id: int | None = None, db: Session = Depends(get_db)):
     # --- PYTHON LERNEN: Depends() ---
     # Depends(get_db) sagt FastAPI: ruf get_db() auf und übergib das Ergebnis als "db".

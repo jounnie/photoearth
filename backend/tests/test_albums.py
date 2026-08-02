@@ -2,13 +2,13 @@
 
 
 def test_list_albums_empty(client):
-    resp = client.get("/api/albums/")
+    resp = client.get("/api/albums")
     assert resp.status_code == 200
     assert resp.json() == []
 
 
 def test_create_album(client):
-    resp = client.post("/api/albums/", json={"name": "Urlaub 2024", "description": "Sommer"})
+    resp = client.post("/api/albums", json={"name": "Urlaub 2024", "description": "Sommer"})
     assert resp.status_code == 201
     data = resp.json()
     assert data["name"] == "Urlaub 2024"
@@ -19,40 +19,40 @@ def test_create_album(client):
 
 
 def test_create_album_default_description(client):
-    resp = client.post("/api/albums/", json={"name": "Minimal"})
+    resp = client.post("/api/albums", json={"name": "Minimal"})
     assert resp.status_code == 201
     assert resp.json()["description"] == ""
 
 
 def test_list_albums_sorted_newest_first(client):
-    client.post("/api/albums/", json={"name": "Erst"})
-    client.post("/api/albums/", json={"name": "Dann"})
-    albums = client.get("/api/albums/").json()
+    client.post("/api/albums", json={"name": "Erst"})
+    client.post("/api/albums", json={"name": "Dann"})
+    albums = client.get("/api/albums").json()
     # Auto-Increment garantiert: späterer INSERT → höhere ID → steht zuerst
     assert albums[0]["id"] > albums[1]["id"]
 
 
 def test_list_albums_includes_photo_count(client, make_jpeg):
-    album = client.post("/api/albums/", json={"name": "Mit Fotos"}).json()
+    album = client.post("/api/albums", json={"name": "Mit Fotos"}).json()
     for _ in range(2):
         client.post(
             "/api/photos/upload",
             files=[("files", ("p.jpg", make_jpeg(), "image/jpeg"))],
             params={"album_id": album["id"]},
         )
-    resp = client.get("/api/albums/")
+    resp = client.get("/api/albums")
     assert resp.json()[0]["photo_count"] == 2
 
 
 def test_update_album_name(client):
-    album = client.post("/api/albums/", json={"name": "Alt"}).json()
+    album = client.post("/api/albums", json={"name": "Alt"}).json()
     resp = client.patch(f"/api/albums/{album['id']}", json={"name": "Neu"})
     assert resp.status_code == 200
     assert resp.json()["name"] == "Neu"
 
 
 def test_update_album_partial_keeps_other_fields(client):
-    album = client.post("/api/albums/", json={"name": "X", "description": "Y"}).json()
+    album = client.post("/api/albums", json={"name": "X", "description": "Y"}).json()
     resp = client.patch(f"/api/albums/{album['id']}", json={"description": "Z"})
     assert resp.json()["name"] == "X"
     assert resp.json()["description"] == "Z"
@@ -64,10 +64,10 @@ def test_update_album_not_found(client):
 
 
 def test_delete_album(client):
-    album = client.post("/api/albums/", json={"name": "Löschen"}).json()
+    album = client.post("/api/albums", json={"name": "Löschen"}).json()
     resp = client.delete(f"/api/albums/{album['id']}")
     assert resp.status_code == 204
-    assert client.get("/api/albums/").json() == []
+    assert client.get("/api/albums").json() == []
 
 
 def test_delete_album_not_found(client):
@@ -76,11 +76,11 @@ def test_delete_album_not_found(client):
 
 
 def test_delete_album_cascades_photos(client, make_jpeg):
-    album = client.post("/api/albums/", json={"name": "Cascade"}).json()
+    album = client.post("/api/albums", json={"name": "Cascade"}).json()
     client.post(
         "/api/photos/upload",
         files=[("files", ("p.jpg", make_jpeg(), "image/jpeg"))],
         params={"album_id": album["id"]},
     )
     client.delete(f"/api/albums/{album['id']}")
-    assert client.get("/api/photos/").json() == []
+    assert client.get("/api/photos").json() == []
