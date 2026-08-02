@@ -16,3 +16,4 @@ frontend/dist/
 # Misc
 .env
 *.pyc
+/.idea/
