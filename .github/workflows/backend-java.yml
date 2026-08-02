@@ -1,0 +1,33 @@
+name: Backend (Java)
+
+on:
+  push:
+    branches: ["**"]
+
+jobs:
+  build:
+    name: Maven build & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-java
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Build and test
+        run: mvn -B verify
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: backend-java/target/surefire-reports/

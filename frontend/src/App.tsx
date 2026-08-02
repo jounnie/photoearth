@@ -64,7 +64,6 @@ export default function App() {
       <div className="app-body">
         <AlbumPanel
           selectedAlbumId={selectedAlbumId}
-          selectedIds={selectedIds}
           onSelect={id => { setSelectedAlbumId(id); setActivePhoto(null) }}
           onClearSelection={handleClearSelection}
         />
