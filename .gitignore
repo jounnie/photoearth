@@ -5,6 +5,9 @@ backend/app/__pycache__/
 backend/app/routers/__pycache__/
 backend/*.db
 backend/app/uploads/
+backend/.coverage
+backend/htmlcov/
+backend/tests/__pycache__/
 
 # Node
 frontend/node_modules/

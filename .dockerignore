@@ -1,0 +1,10 @@
+.git/
+**/__pycache__/
+**/*.pyc
+backend/.venv/
+backend/.coverage
+backend/htmlcov/
+backend/*.db
+backend/app/uploads/
+frontend/node_modules/
+frontend/dist/

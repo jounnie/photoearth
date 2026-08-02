@@ -24,10 +24,13 @@ from ..models import Photo
 from ..schemas import PhotoOut, PhotoGpsUpdate
 from ..exif_utils import extract_metadata
 
-# --- PYTHON LERNEN: Konstanten ---
-# Großbuchstaben = Konvention für Konstanten (Werte die sich nicht ändern)
-# os.makedirs mit exist_ok=True erstellt den Ordner, falls er nicht existiert
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+# --- PYTHON LERNEN: Konfigurierbare Pfade via Umgebungsvariablen ---
+# Lokal: Bilder liegen neben dem Code in app/uploads/
+# Auf Fly.io: UPLOAD_DIR=/data/uploads (persistentes Volume, überlebt Neustarts)
+UPLOAD_DIR = os.environ.get(
+    "UPLOAD_DIR",
+    os.path.join(os.path.dirname(__file__), "..", "uploads"),
+)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # --- PYTHON LERNEN: APIRouter ---
@@ -69,10 +72,10 @@ async def _process_upload(
 
 
 # --- PYTHON LERNEN: Dekoratoren (@) ---
-# @router.get("/") ist ein Dekorator: er "verpackt" die Funktion darunter.
-# Er sagt FastAPI: "Wenn jemand GET /photos/ aufruft, führe list_photos() aus."
+# @router.get("") ist ein Dekorator: er "verpackt" die Funktion darunter.
+# Er sagt FastAPI: "Wenn jemand GET /photos aufruft, führe list_photos() aus."
 # response_model=list[PhotoOut] → FastAPI wandelt das Ergebnis automatisch in JSON um.
-@router.get("/", response_model=list[PhotoOut])
+@router.get("", response_model=list[PhotoOut])
 def list_photos(album_id: int | None = None, db: Session = Depends(get_db)):
     # --- PYTHON LERNEN: Depends() ---
     # Depends(get_db) sagt FastAPI: ruf get_db() auf und übergib das Ergebnis als "db".

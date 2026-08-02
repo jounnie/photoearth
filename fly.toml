@@ -1,0 +1,20 @@
+# Rename "photoearth" to something unique before running `fly launch`
+app = "photoearth"
+primary_region = "fra"
+
+[build]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true   # free tier: machine sleeps when idle
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[mounts]]
+  source = "photoearth_data"  # created automatically by `fly volumes create`
+  destination = "/data"

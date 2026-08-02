@@ -3,7 +3,7 @@ import pytest
 
 
 def test_list_photos_empty(client):
-    resp = client.get("/api/photos/")
+    resp = client.get("/api/photos")
     assert resp.status_code == 200
     assert resp.json() == []
 
@@ -78,7 +78,7 @@ def test_upload_no_valid_images_returns_empty_list(client):
 
 
 def test_upload_assigns_album(client, make_jpeg):
-    album = client.post("/api/albums/", json={"name": "Album"}).json()
+    album = client.post("/api/albums", json={"name": "Album"}).json()
     resp = client.post(
         "/api/photos/upload",
         files=[("files", ("p.jpg", make_jpeg(), "image/jpeg"))],
@@ -93,17 +93,17 @@ def test_list_photos_sorted_newest_first(client, make_jpeg):
             "/api/photos/upload",
             files=[("files", (name, make_jpeg(), "image/jpeg"))],
         )
-    names = [p["original_name"] for p in client.get("/api/photos/").json()]
+    names = [p["original_name"] for p in client.get("/api/photos").json()]
     assert names == ["b.jpg", "a.jpg"]
 
 
 def test_list_photos_filter_by_album(client, make_jpeg):
-    a1 = client.post("/api/albums/", json={"name": "A1"}).json()
-    a2 = client.post("/api/albums/", json={"name": "A2"}).json()
+    a1 = client.post("/api/albums", json={"name": "A1"}).json()
+    a2 = client.post("/api/albums", json={"name": "A2"}).json()
     client.post("/api/photos/upload", files=[("files", ("p1.jpg", make_jpeg(), "image/jpeg"))], params={"album_id": a1["id"]})
     client.post("/api/photos/upload", files=[("files", ("p2.jpg", make_jpeg(), "image/jpeg"))], params={"album_id": a2["id"]})
 
-    resp = client.get("/api/photos/", params={"album_id": a1["id"]})
+    resp = client.get("/api/photos", params={"album_id": a1["id"]})
     assert len(resp.json()) == 1
     assert resp.json()[0]["album_id"] == a1["id"]
 
@@ -150,7 +150,7 @@ def test_update_gps_overrides_exif(client, make_jpeg):
     ).json()[0]["id"]
 
     client.patch(f"/api/photos/{photo_id}/gps", json={"lat": 48.0, "lng": 11.0})
-    data = client.get("/api/photos/").json()[0]
+    data = client.get("/api/photos").json()[0]
     assert data["lat"] == pytest.approx(48.0)
     assert data["exif_lat"] == pytest.approx(10.0, abs=0.1)  # EXIF bleibt erhalten
 
@@ -161,7 +161,7 @@ def test_update_gps_not_found(client):
 
 
 def test_assign_album(client, make_jpeg):
-    album_id = client.post("/api/albums/", json={"name": "Album"}).json()["id"]
+    album_id = client.post("/api/albums", json={"name": "Album"}).json()["id"]
     photo_id = client.post(
         "/api/photos/upload",
         files=[("files", ("p.jpg", make_jpeg(), "image/jpeg"))],
@@ -173,7 +173,7 @@ def test_assign_album(client, make_jpeg):
 
 
 def test_remove_album_assignment(client, make_jpeg):
-    album_id = client.post("/api/albums/", json={"name": "Album"}).json()["id"]
+    album_id = client.post("/api/albums", json={"name": "Album"}).json()["id"]
     photo_id = client.post(
         "/api/photos/upload",
         files=[("files", ("p.jpg", make_jpeg(), "image/jpeg"))],
@@ -194,7 +194,7 @@ def test_delete_photo(client, make_jpeg):
 
     resp = client.delete(f"/api/photos/{photo_id}")
     assert resp.status_code == 204
-    assert client.get("/api/photos/").json() == []
+    assert client.get("/api/photos").json() == []
 
 
 def test_delete_photo_not_found(client):

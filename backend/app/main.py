@@ -1,13 +1,18 @@
 # --- PYTHON LERNEN: FastAPI ---
 # FastAPI ist ein Web-Framework für Python – es empfängt HTTP-Anfragen und sendet Antworten.
 # "from X import Y" importiert nur Y aus dem Modul X (spart Speicher).
-from fastapi import FastAPI
+import base64
+import logging
+import os
+import secrets
+import time
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware  # Middleware = läuft bei jeder Anfrage
 from fastapi.staticfiles import StaticFiles         # Für HTML/JS/CSS-Dateien
-
-# --- PYTHON LERNEN: Standardbibliothek ---
-# "os" ist immer dabei (eingebaut in Python). Kein pip install nötig.
-import os
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 # Relativer Import: "." = das aktuelle Paket (app/)
 from .database import engine, Base
@@ -18,10 +23,95 @@ from .routers import photos, albums, ai
 # falls sie noch nicht existieren (liest die Klassen aus models.py).
 Base.metadata.create_all(bind=engine)
 
-# --- PYTHON LERNEN: Objekte erstellen (Instanzen) ---
-# FastAPI() ruft den Konstruktor auf und erzeugt ein Objekt.
-# Das Objekt heißt "app" – FastAPI/uvicorn sucht nach diesem Namen.
 app = FastAPI(title="PhotoEarth API")
+
+
+# --- PYTHON LERNEN: Middleware-Klasse ---
+# Middleware läuft bei JEDER Anfrage, bevor sie die Route erreicht.
+# BaseHTTPMiddleware ist die Basisklasse von Starlette (das Framework unter FastAPI).
+class _BasicAuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Wenn PHOTOEARTH_PASSWORD nicht gesetzt ist → Auth deaktiviert (lokal)
+        password = os.environ.get("PHOTOEARTH_PASSWORD", "")
+        if not password:
+            return await call_next(request)
+
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Basic "):
+            # Nur das Dekodieren der Credentials darf hier fehlschlagen (kaputter
+            # Header o.ä.) — call_next() bewusst AUSSERHALB des try, sonst würde
+            # jeder Fehler in der eigentlichen Route (z.B. fehlender API-Key)
+            # hier verschluckt und fälschlich als 401 gemeldet statt als 500.
+            try:
+                # base64-dekodieren: "dXNlcjpwYXNz" → "user:pass"
+                decoded = base64.b64decode(auth[6:]).decode()
+                username, _, pwd = decoded.partition(":")
+                expected_user = os.environ.get("PHOTOEARTH_USER", "admin")
+                # secrets.compare_digest verhindert Timing-Angriffe
+                credentials_ok = (secrets.compare_digest(username, expected_user) and
+                                   secrets.compare_digest(pwd, password))
+            except Exception:
+                credentials_ok = False
+            if credentials_ok:
+                return await call_next(request)
+
+        # WWW-Authenticate: Basic → Browser zeigt Login-Dialog
+        return Response(
+            "Unauthorized",
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="PhotoEarth"'},
+        )
+
+
+app.add_middleware(_BasicAuthMiddleware)
+
+
+# --- PYTHON LERNEN: Logging ---
+# logging ist das eingebaute Python-Modul für strukturierte Log-Ausgaben.
+# getLogger(__name__) erzeugt einen Logger mit dem Namen des aktuellen Moduls.
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    # Format: Zeitstempel + Level + Nachricht
+    format="%(asctime)s %(levelname)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+
+class _RequestLogMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start = time.perf_counter()
+        response = await call_next(request)
+        duration_ms = (time.perf_counter() - start) * 1000
+
+        # Extract username from Basic Auth header for the audit trail.
+        # Falls back to "-" when auth is disabled (local dev).
+        user = "-"
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Basic "):
+            try:
+                decoded = base64.b64decode(auth[6:]).decode()
+                user = decoded.partition(":")[0] or "-"
+            except Exception:
+                pass
+
+        # Include query string when present (e.g. ?album_id=3 shows what was filtered)
+        path = request.url.path
+        if request.url.query:
+            path = f"{path}?{request.url.query}"
+
+        logger.info(
+            "%s %s %s user=%s %.0fms",
+            request.method,
+            path,
+            response.status_code,
+            user,
+            duration_ms,
+        )
+        return response
+
+
+app.add_middleware(_RequestLogMiddleware)
 
 # --- PYTHON LERNEN: Methoden aufrufen ---
 # app.add_middleware() ist eine Methode des app-Objekts.
@@ -40,6 +130,17 @@ app.add_middleware(
 app.include_router(photos.router, prefix="/api")
 app.include_router(albums.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
+
+
+# --- PYTHON LERNEN: Catch-all für unbekannte /api-Pfade ---
+# Ohne das würde eine Anfrage wie POST /api/albumz (Tippfehler o.ä.), die von
+# keinem Router oben abgedeckt wird, bis zum StaticFiles-Mount unten "durchfallen"
+# und dort einen irreführenden 405 (nur GET/HEAD erlaubt) statt eines klaren
+# 404 zurückbekommen.
+@app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+async def api_not_found(path: str):
+    raise HTTPException(status_code=404, detail="Not Found")
+
 
 # --- PYTHON LERNEN: os.path für Dateipfade ---
 # os.path.join() verbindet Pfadteile plattformunabhängig (/ auf Linux, \ auf Windows).
