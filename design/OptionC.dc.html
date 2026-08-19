@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #5ffbc0; }
+    a:hover { color: #8dffd4; }
+  </style>
+</helmet>
+
+<div style="width:1440px;height:900px;display:flex;flex-direction:column;background:#07080d;font-family:'Sora',system-ui,sans-serif;color:#eef1ff;overflow:hidden;border-radius:14px;position:relative;">
+
+  <!-- ambient glow -->
+  <div style="position:absolute;top:-200px;right:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(95,251,192,0.12),transparent 70%);pointer-events:none;"></div>
+
+  <!-- header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;position:relative;z-index:1;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5ffbc0" stroke-width="1.6"/><path d="M3 12h18M12 3c2.8 2.6 4.2 5.8 4.2 9s-1.4 6.4-4.2 9c-2.8-2.6-4.2-5.8-4.2-9s1.4-6.4 4.2-9z" stroke="#5ffbc0" stroke-width="1.3"/></svg>
+      <span style="font-size:19px;font-weight:800;letter-spacing:-0.01em;">PhotoEarth</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="background:rgba(95,251,192,0.14);color:#5ffbc0;border:1px solid rgba(95,251,192,0.3);padding:6px 16px;border-radius:99px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;">12 SELECTED</div>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;min-height:0;position:relative;z-index:1;">
+
+    <!-- album panel -->
+    <div style="width:224px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);display:flex;flex-direction:column;padding:18px 12px;gap:4px;overflow:auto;">
+      <div style="font-family:'Space Mono',monospace;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#565d80;padding:0 10px 10px;">Albums</div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;background:rgba(95,251,192,0.1);border:1px solid rgba(95,251,192,0.25);">
+        <span style="flex:1;font-size:13.5px;font-weight:700;color:#5ffbc0;">All Photos</span>
+        <span style="font-family:'Space Mono',monospace;font-size:11.5px;color:#5ffbc0;">53</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;">
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#c4c9e6;">Iceland 2024</span>
+        <span style="font-family:'Space Mono',monospace;font-size:11.5px;color:#565d80;">18</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;">
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#c4c9e6;">Alps Hike</span>
+        <span style="font-family:'Space Mono',monospace;font-size:11.5px;color:#565d80;">7</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;">
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#c4c9e6;">Family Reunion</span>
+        <span style="font-family:'Space Mono',monospace;font-size:11.5px;color:#565d80;">23</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;">
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#c4c9e6;">Unsorted</span>
+        <span style="font-family:'Space Mono',monospace;font-size:11.5px;color:#565d80;">5</span>
+      </div>
+
+      <button style="margin-top:12px;border:1.5px dashed rgba(255,255,255,0.16);background:transparent;color:#8a90b8;font-family:inherit;font-size:12.5px;font-weight:600;padding:10px;border-radius:10px;cursor:pointer;">+ New Album</button>
+    </div>
+
+    <!-- photo list panel -->
+    <div style="width:330px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.015);display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:16px 16px 12px;">
+        <div style="border:1.5px dashed rgba(255,255,255,0.16);border-radius:12px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#8a90b8;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke="#5ffbc0" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#8a90b8" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span style="font-size:12.5px;font-weight:600;">Drop photos here</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;">
+          <div style="background:#eef1ff;color:#07080d;padding:5px 12px;border-radius:99px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;">ALL 53</div>
+          <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);padding:5px 12px;border-radius:99px;font-family:'Space Mono',monospace;font-size:11px;font-weight:600;color:#c4c9e6;"><span style="width:6px;height:6px;border-radius:50%;background:#5ffbc0;display:inline-block;"></span>41</div>
+          <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);padding:5px 12px;border-radius:99px;font-family:'Space Mono',monospace;font-size:11px;font-weight:600;color:#c4c9e6;"><span style="width:6px;height:6px;border-radius:50%;background:#f0c860;display:inline-block;"></span>4</div>
+          <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);padding:5px 12px;border-radius:99px;font-family:'Space Mono',monospace;font-size:11px;font-weight:600;color:#c4c9e6;"><span style="width:6px;height:6px;border-radius:50%;background:#ff5d73;display:inline-block;"></span>8</div>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow:auto;padding:0 12px 16px;display:flex;flex-direction:column;gap:6px;">
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;border-radius:12px;background:rgba(95,251,192,0.08);border:1px solid rgba(95,251,192,0.2);">
+          <div style="width:52px;height:52px;border-radius:9px;background:linear-gradient(135deg,#2a4a5f,#5ffbc0);flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:#eef1ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">IMG_0231.jpg</div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;color:#8a90b8;margin-top:2px;">47.37°N 8.54°E</div>
+          </div>
+          <span style="width:8px;height:8px;border-radius:50%;background:#5ffbc0;flex-shrink:0;box-shadow:0 0 8px #5ffbc0;"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;border-radius:12px;">
+          <div style="width:52px;height:52px;border-radius:9px;background:linear-gradient(135deg,#3a2a5f,#7a5ffb);flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:#eef1ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">IMG_0244.jpg</div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;color:#8a90b8;margin-top:2px;">47.36°N 8.55°E</div>
+          </div>
+          <span style="width:8px;height:8px;border-radius:50%;background:#5ffbc0;flex-shrink:0;"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;border-radius:12px;">
+          <div style="width:52px;height:52px;border-radius:9px;background:linear-gradient(135deg,#2a2a3a,#4a4a5f);flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:#eef1ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">DSC_1042.jpg</div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;color:#ff5d73;margin-top:2px;">no location</div>
+          </div>
+          <span style="width:8px;height:8px;border-radius:50%;background:#ff5d73;flex-shrink:0;"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;border-radius:12px;">
+          <div style="width:52px;height:52px;border-radius:9px;background:linear-gradient(135deg,#5f4a2a,#f0c860);flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:#eef1ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">IMG_0298.jpg</div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;color:#8a90b8;margin-top:2px;">0.00°N 0.00°E</div>
+          </div>
+          <span style="width:8px;height:8px;border-radius:50%;background:#f0c860;flex-shrink:0;"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;border-radius:12px;">
+          <div style="width:52px;height:52px;border-radius:9px;background:linear-gradient(135deg,#2a4a5f,#4fa8ff);flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:#eef1ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">IMG_0311.jpg</div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;color:#8a90b8;margin-top:2px;">46.95°N 7.44°E</div>
+          </div>
+          <span style="width:8px;height:8px;border-radius:50%;background:#5ffbc0;flex-shrink:0;"></span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- map -->
+    <div style="flex:1;position:relative;background:#0a0c16;overflow:hidden;">
+      <svg width="100%" height="100%" viewBox="0 0 880 720" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;">
+        <rect width="880" height="720" fill="#0a0c16"/>
+        <path d="M0 500 Q 150 420 280 470 T 560 440 Q 700 420 880 500 L880 720 L0 720 Z" fill="#11142a" opacity="0.8"/>
+        <path d="M120 180 Q 260 120 380 190 T 640 170 Q 780 140 880 210" stroke="#2a2f52" stroke-width="1.5" fill="none"/>
+        <path d="M0 300 Q 200 260 400 310 T 880 280" stroke="#2a2f52" stroke-width="1.2" fill="none"/>
+        <circle cx="390" cy="280" r="140" fill="url(#glow)" opacity="0.5"/>
+        <defs>
+          <radialGradient id="glow"><stop offset="0%" stop-color="#5ffbc0" stop-opacity="0.15"/><stop offset="100%" stop-color="#5ffbc0" stop-opacity="0"/></radialGradient>
+        </defs>
+      </svg>
+
+      <svg width="26" height="34" viewBox="0 0 24 32" style="position:absolute;left:280px;top:220px;filter:drop-shadow(0 0 6px rgba(95,251,192,0.5));"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#5ffbc0"/><circle cx="12" cy="12" r="5" fill="#07080d"/></svg>
+      <svg width="26" height="34" viewBox="0 0 24 32" style="position:absolute;left:460px;top:150px;filter:drop-shadow(0 0 6px rgba(95,251,192,0.5));"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#5ffbc0"/><circle cx="12" cy="12" r="5" fill="#07080d"/></svg>
+      <svg width="26" height="34" viewBox="0 0 24 32" style="position:absolute;left:610px;top:310px;filter:drop-shadow(0 0 6px rgba(95,251,192,0.5));"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#5ffbc0"/><circle cx="12" cy="12" r="5" fill="#07080d"/></svg>
+
+      <svg width="36" height="46" viewBox="0 0 24 32" style="position:absolute;left:390px;top:260px;filter:drop-shadow(0 0 14px rgba(95,251,192,0.8));"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#5ffbc0"/><circle cx="12" cy="12" r="5.5" fill="#07080d"/></svg>
+
+      <div style="position:absolute;left:420px;top:200px;background:rgba(14,16,28,0.9);backdrop-filter:blur(12px);border:1px solid rgba(95,251,192,0.25);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,0.5);width:200px;">
+        <div style="width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#2a4a5f,#5ffbc0);flex-shrink:0;"></div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#eef1ff;">IMG_0231.jpg</div>
+          <div style="font-family:'Space Mono',monospace;font-size:10px;color:#8a90b8;margin-top:2px;">47.37°N 8.54°E</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

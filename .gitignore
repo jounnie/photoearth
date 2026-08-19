@@ -17,3 +17,4 @@ frontend/dist/
 .env
 *.pyc
 /.idea/
+design/photoearth-redesign-directions.html
