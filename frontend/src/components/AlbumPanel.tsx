@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAlbums, createAlbum, deleteAlbum, assignAlbum } from '../api/client'
+import { PhotosIcon, FolderIcon } from './icons'
 import type { Album } from '../types'
 
 const DRAG_TYPE = 'application/photoearth-ids'
@@ -62,7 +63,7 @@ export function AlbumPanel({ selectedAlbumId, onSelect, onClearSelection }: Prop
         className={`album-item ${selectedAlbumId === null ? 'active' : ''}`}
         onClick={() => onSelect(null)}
       >
-        <span className="album-icon">📷</span>
+        <span className="album-icon"><PhotosIcon /></span>
         <span className="album-name">Alle Fotos</span>
       </button>
 
@@ -75,7 +76,7 @@ export function AlbumPanel({ selectedAlbumId, onSelect, onClearSelection }: Prop
           onDragLeave={() => setDragOverId(null)}
           onDrop={e => handleDrop(e, album.id)}
         >
-          <span className="album-icon">🗂️</span>
+          <span className="album-icon"><FolderIcon /></span>
           <span className="album-name">{album.name}</span>
           <span className="album-count">{album.photo_count}</span>
           <button
