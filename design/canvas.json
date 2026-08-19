@@ -1,14 +1,10 @@
 {
   "artboards": [
     { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 900 },
-    { "file": "OptionB.dc.html", "x": 1520, "y": 0, "w": 1440, "h": 900 },
-    { "file": "OptionC.dc.html", "x": 3040, "y": 0, "w": 1440, "h": 900 }
+    { "file": "Dark.dc.html", "x": 1520, "y": 0, "w": 1440, "h": 900 }
   ],
   "annotations": [
-    { "id": "note-summary", "x": 0, "y": -220, "w": 640, "text": "PhotoEarth — 3 Richtungen für ein Gesamt-Redesign\nGleicher 3-Spalten-Aufbau (Alben / Fotoliste / Karte), unterschiedliche Aesthetik." },
-    { "id": "note-a", "x": 0, "y": -100, "w": 420, "text": "A — Warm Atlas\nEinladend, editorial, wie ein Reisetagebuch. Piazzolla + Manrope, warme Terrakotta-/Sand-Töne." },
-    { "id": "note-b", "x": 1520, "y": -100, "w": 420, "text": "B — Mono Precision\nKlares Werkzeug, technisch-präzise. Space Grotesk + IBM Plex Mono, ein einziger Indigo-Akzent." },
-    { "id": "note-c", "x": 3040, "y": -100, "w": 420, "text": "C — Deep Cartograph\nDramatisch, kartografisch, futuristisch. Sora + Space Mono, leuchtendes Mint auf Tiefschwarz." }
+    { "id": "note-summary", "x": 0, "y": -160, "w": 640, "text": "PhotoEarth — finale Richtung: Mono Precision (B)\nDark-Mode-Toggle oben rechts im Header, gleiche Bausteine in beiden Modi." }
   ],
   "launch": { "view": "canvas" }
 }

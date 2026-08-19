@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #7b74ff; }
+    a:hover { color: #9a94ff; }
+  </style>
+</helmet>
+
+<div style="width:1440px;height:900px;display:flex;flex-direction:column;background:#0d0d10;font-family:'Space Grotesk',system-ui,sans-serif;color:#f2f2f2;overflow:hidden;border:1px solid #232326;border-radius:14px;">
+
+  <!-- header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-bottom:1px solid #232326;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#f2f2f2" stroke-width="1.6"/><path d="M3 9h18M9 3v18" stroke="#f2f2f2" stroke-width="1.2"/></svg>
+      <span style="font-size:19px;font-weight:700;letter-spacing:-0.01em;">PhotoEarth</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="background:#f2f2f2;color:#0d0d10;padding:6px 16px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;">12 SELECTED</div>
+
+      <!-- dark mode toggle (on) -->
+      <div style="display:flex;align-items:center;gap:8px;background:#1a1a1e;border:1px solid #2a2a2e;border-radius:99px;padding:4px;position:relative;width:64px;height:32px;">
+        <div style="position:absolute;left:32px;top:4px;width:24px;height:24px;border-radius:50%;background:#7b74ff;box-shadow:0 0 10px rgba(123,116,255,0.5);"></div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="position:relative;z-index:1;margin-left:5px;"><circle cx="12" cy="12" r="4.5" stroke="#5a5a60" stroke-width="1.8"/><path d="M12 2v2.5M12 19.5V22M22 12h-2.5M4.5 12H2M19.07 4.93l-1.77 1.77M6.7 17.3l-1.77 1.77M19.07 19.07l-1.77-1.77M6.7 6.7L4.93 4.93" stroke="#5a5a60" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="position:relative;z-index:1;margin-left:auto;margin-right:5px;"><path d="M21 12.4A9 9 0 1111.6 3a7 7 0 009.4 9.4z" stroke="#ffffff" stroke-width="1.6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;min-height:0;">
+
+    <!-- album panel -->
+    <div style="width:224px;flex-shrink:0;border-right:1px solid #232326;background:#131316;display:flex;flex-direction:column;padding:18px 12px;gap:2px;overflow:auto;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#6b6b70;padding:0 10px 10px;">Albums</div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:3px;background:#f2f2f2;">
+        <span style="flex:1;font-size:13px;font-weight:600;color:#0d0d10;">All Photos</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#0d0d10;">53</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:3px;">
+        <span style="flex:1;font-size:13px;font-weight:500;color:#d4d4d6;">Island 2024</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#6b6b70;">18</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:3px;">
+        <span style="flex:1;font-size:13px;font-weight:500;color:#d4d4d6;">Alps Hike</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#6b6b70;">7</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:3px;">
+        <span style="flex:1;font-size:13px;font-weight:500;color:#d4d4d6;">Family Reunion</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#6b6b70;">23</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:3px;">
+        <span style="flex:1;font-size:13px;font-weight:500;color:#d4d4d6;">Unsorted</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#6b6b70;">5</span>
+      </div>
+
+      <button style="margin-top:12px;border:1px solid #2e2e32;background:transparent;color:#8f8f95;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;padding:9px;border-radius:3px;cursor:pointer;">+ NEW ALBUM</button>
+    </div>
+
+    <!-- photo list panel -->
+    <div style="width:330px;flex-shrink:0;border-right:1px solid #232326;background:#0d0d10;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:16px 16px 12px;">
+        <div style="border:1px dashed #2e2e32;border-radius:4px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#6b6b70;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke="#7b74ff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#6b6b70" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;">DROP FILES OR CLICK</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;">
+          <div style="background:#f2f2f2;color:#0d0d10;padding:5px 11px;border-radius:3px;font-size:11px;font-weight:600;">ALL 53</div>
+          <div style="display:flex;align-items:center;gap:5px;background:#1a1a1e;padding:5px 11px;border-radius:3px;font-size:11px;font-weight:600;color:#d4d4d6;"><span style="width:6px;height:6px;background:#4fae82;display:inline-block;"></span>41</div>
+          <div style="display:flex;align-items:center;gap:5px;background:#1a1a1e;padding:5px 11px;border-radius:3px;font-size:11px;font-weight:600;color:#d4d4d6;"><span style="width:6px;height:6px;background:#d9ab4a;display:inline-block;"></span>4</div>
+          <div style="display:flex;align-items:center;gap:5px;background:#1a1a1e;padding:5px 11px;border-radius:3px;font-size:11px;font-weight:600;color:#d4d4d6;"><span style="width:6px;height:6px;background:#e2707c;display:inline-block;"></span>8</div>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow:auto;padding:0 12px 16px;display:flex;flex-direction:column;gap:1px;">
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;background:#1a1a1e;">
+          <div style="width:50px;height:50px;background:#2a2a2e;flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#f2f2f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">IMG_0231.jpg</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6b6b70;margin-top:3px;">47.3700, 8.5400</div>
+          </div>
+          <span style="width:7px;height:7px;background:#4fae82;flex-shrink:0;"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;">
+          <div style="width:50px;height:50px;background:#222226;flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#f2f2f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">IMG_0244.jpg</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6b6b70;margin-top:3px;">47.3600, 8.5500</div>
+          </div>
+          <span style="width:7px;height:7px;background:#4fae82;flex-shrink:0;"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;">
+          <div style="width:50px;height:50px;background:#222226;flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#f2f2f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">DSC_1042.jpg</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#e2707c;margin-top:3px;">NO LOCATION</div>
+          </div>
+          <span style="width:7px;height:7px;background:#e2707c;flex-shrink:0;"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;">
+          <div style="width:50px;height:50px;background:#222226;flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#f2f2f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">IMG_0298.jpg</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6b6b70;margin-top:3px;">0.0000, 0.0000</div>
+          </div>
+          <span style="width:7px;height:7px;background:#d9ab4a;flex-shrink:0;"></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;padding:9px;">
+          <div style="width:50px;height:50px;background:#222226;flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#f2f2f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">IMG_0311.jpg</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6b6b70;margin-top:3px;">46.9500, 7.4400</div>
+          </div>
+          <span style="width:7px;height:7px;background:#4fae82;flex-shrink:0;"></span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- map -->
+    <div style="flex:1;position:relative;background:#0a0a0d;overflow:hidden;">
+      <svg width="100%" height="100%" viewBox="0 0 880 720" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;">
+        <defs>
+          <pattern id="gridd" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M40 0H0V40" fill="none" stroke="#1c1c20" stroke-width="1"/>
+          </pattern>
+          <radialGradient id="glowd"><stop offset="0%" stop-color="#7b74ff" stop-opacity="0.12"/><stop offset="100%" stop-color="#7b74ff" stop-opacity="0"/></radialGradient>
+        </defs>
+        <rect width="880" height="720" fill="url(#gridd)"/>
+        <path d="M0 500 Q 150 420 280 470 T 560 440 Q 700 420 880 500" stroke="#2a2a30" stroke-width="1.5" fill="none"/>
+        <circle cx="390" cy="280" r="140" fill="url(#glowd)"/>
+      </svg>
+
+      <svg width="24" height="32" viewBox="0 0 24 32" style="position:absolute;left:280px;top:220px;"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#f2f2f2"/><circle cx="12" cy="12" r="5" fill="#0d0d10"/></svg>
+      <svg width="24" height="32" viewBox="0 0 24 32" style="position:absolute;left:460px;top:150px;"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#f2f2f2"/><circle cx="12" cy="12" r="5" fill="#0d0d10"/></svg>
+      <svg width="24" height="32" viewBox="0 0 24 32" style="position:absolute;left:610px;top:310px;"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#f2f2f2"/><circle cx="12" cy="12" r="5" fill="#0d0d10"/></svg>
+
+      <svg width="34" height="44" viewBox="0 0 24 32" style="position:absolute;left:390px;top:260px;filter:drop-shadow(0 0 12px rgba(123,116,255,0.6));"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="#7b74ff"/><circle cx="12" cy="12" r="5.5" fill="#0d0d10"/></svg>
+
+      <div style="position:absolute;left:420px;top:200px;background:#131316;border:1px solid #232326;border-radius:4px;padding:10px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,0.4);width:200px;">
+        <div style="width:42px;height:42px;background:#222226;flex-shrink:0;"></div>
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#f2f2f2;">IMG_0231.jpg</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b6b70;margin-top:3px;">47.3700, 8.5400</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
