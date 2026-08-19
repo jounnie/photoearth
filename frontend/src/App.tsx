@@ -4,10 +4,13 @@ import { getPhotos } from './api/client'
 import { AlbumPanel } from './components/AlbumPanel'
 import { PhotoList } from './components/PhotoList'
 import { MapView } from './components/MapView'
+import { ThemeToggle } from './components/ThemeToggle'
+import { useTheme } from './hooks/useTheme'
 import type { Photo, GpsType } from './types'
 import './App.css'
 
 export default function App() {
+  const { theme, toggleTheme } = useTheme()
   const [selectedAlbumId, setSelectedAlbumId] = useState<number | null>(null)
   const [activePhoto, setActivePhoto]         = useState<Photo | null>(null)
   const [activeFilter, setActiveFilter]       = useState<GpsType | 'all'>('all')
@@ -54,11 +57,19 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <span>🌍</span>
+        <span className="app-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M3 12h18M12 3c2.8 2.6 4.2 5.8 4.2 9s-1.4 6.4-4.2 9c-2.8-2.6-4.2-5.8-4.2-9s1.4-6.4 4.2-9z" stroke="currentColor" strokeWidth="1.3" />
+          </svg>
+        </span>
         <h1>PhotoEarth</h1>
-        {selectedIds.size > 0 && (
-          <span className="selection-badge">{selectedIds.size} ausgewählt</span>
-        )}
+        <div className="header-actions">
+          {selectedIds.size > 0 && (
+            <span className="selection-badge">{selectedIds.size} AUSGEWÄHLT</span>
+          )}
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+        </div>
       </header>
 
       <div className="app-body">
@@ -84,6 +95,7 @@ export default function App() {
           photos={photos}
           activePhoto={activePhoto}
           onMarkerClick={handleFocusPhoto}
+          theme={theme}
         />
       </div>
     </div>

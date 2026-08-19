@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { uploadPhotos, detectLocation, deletePhoto, assignAlbum, getAlbums } from '../api/client'
+import { UploadIcon, MapEmptyIcon, FolderIcon, WandIcon, PinIcon } from './icons'
 import type { Photo, GpsType, Album } from '../types'
 
 const DRAG_TYPE = 'application/photoearth-ids'
@@ -95,12 +96,13 @@ export function PhotoList({
     e.dataTransfer.effectAllowed = 'move'
 
     // Ghost image: show count badge
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3f39ff'
     const ghost = document.createElement('div')
     ghost.style.cssText = [
       'position:fixed', 'top:-200px', 'left:0',
-      'background:#6c8fff', 'color:#fff',
+      `background:${accent}`, 'color:#fff',
       'padding:4px 10px', 'border-radius:99px',
-      'font:600 13px system-ui', 'pointer-events:none',
+      'font:600 13px "Space Grotesk",system-ui', 'pointer-events:none',
     ].join(';')
     ghost.textContent = ids.length > 1 ? `${ids.length} Fotos` : photo.original_name
     document.body.appendChild(ghost)
@@ -132,7 +134,7 @@ export function PhotoList({
     <div className="photo-list-panel">
       {/* Drop zone */}
       <div className="drop-zone" onDragOver={e => e.preventDefault()} onDrop={handleFileDrop}>
-        <span className="drop-icon">📷</span>
+        <span className="drop-icon"><UploadIcon /></span>
         <p><strong>Fotos oder Ordner hierher ziehen</strong></p>
         <div className="drop-actions">
           <button className="drop-btn" onClick={() => inputRef.current?.click()}>Dateien wählen</button>
@@ -177,7 +179,7 @@ export function PhotoList({
       <div className="photo-list-scroll">
         {photos.length === 0 && (
           <div className="empty-state">
-            <div className="empty-icon">🗺️</div>
+            <div className="empty-icon"><MapEmptyIcon /></div>
             <p>Noch keine Fotos geladen</p>
           </div>
         )}
@@ -224,7 +226,9 @@ export function PhotoList({
                     <div className="info">
                       <div className="name">{photo.original_name}</div>
                       <div className="coords">{COORD_TEXT(photo)}</div>
-                      {photo.location_name && <div className="location-name">📍 {photo.location_name}</div>}
+                      {photo.location_name && (
+                        <div className="location-name"><PinIcon /> {photo.location_name}</div>
+                      )}
                     </div>
 
                     <div className="item-actions">
@@ -237,7 +241,7 @@ export function PhotoList({
                             e.stopPropagation()
                             setPickerPhotoId(prev => prev === photo.id ? null : photo.id)
                           }}
-                        >🗂️</button>
+                        ><FolderIcon /></button>
                         {pickerPhotoId === photo.id && (
                           <div className="album-picker-dropdown">
                             {photo.album_id !== null && (
@@ -260,7 +264,7 @@ export function PhotoList({
                         <button className="action-btn ai" title="Ort via AI erkennen"
                           onClick={e => { e.stopPropagation(); aiMut.mutate(photo.id) }}
                           disabled={aiMut.isPending}
-                        >🤖</button>
+                        ><WandIcon /></button>
                       )}
                       <button className="action-btn del" title="Foto löschen"
                         onClick={e => { e.stopPropagation(); deleteMut.mutate(photo.id) }}
